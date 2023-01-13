@@ -1,0 +1,2 @@
+boto3<2.0.0
+patreon@https://github.com/svrakiss/patreon-python/archive/refs/tags/v0.5.1.zip
