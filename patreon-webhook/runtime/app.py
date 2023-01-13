@@ -42,6 +42,13 @@ def webhook_callback():
      , ReturnValues="ALL_NEW"
     )
 
+@app.route('/character',methods = ['POST','PUT'])
+def add_character():
+    request = app.current_request.json_body
+    return dynamodb_table.query(IndexName='discordIdIndex',
+    KeyConditions={"DiscordId": 
+    {'AttributeValueList':[str(request.get('discordId')  ) ],
+    'ComparisonOperator':'EQ'}})
 
 def parseJSONAPI(member:JSONAPIResource):
     patron = dict();

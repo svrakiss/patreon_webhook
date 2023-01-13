@@ -9,7 +9,7 @@ except ImportError:
     import aws_cdk as cdk
 
 from chalice.cdk import Chalice
-
+import aws_cdk.aws_iam  as iam
 
 RUNTIME_SOURCE_DIR = os.path.join(
     os.path.dirname(os.path.dirname(__file__)), os.pardir, 'runtime')
@@ -30,6 +30,13 @@ class ChaliceApp(cdk.Stack):
         )
         self.dynamodb_table.grant_read_write_data(
             self.chalice.get_role('DefaultRole')
+        )
+        self.chalice.get_role('DefaultRole').attach_inline_policy(
+            iam.Policy(self,'indexPolicy',
+            statements=[iam.PolicyStatement(
+                actions=["dynamodb:Query"],
+                resources=[self.dynamodb_table.table_arn+'/index/*']
+            )])
         )
 
     def _create_ddb_table(self):
