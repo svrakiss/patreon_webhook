@@ -3,6 +3,8 @@ import boto3
 from chalice import Chalice, Response
 from patreon.jsonapi.parser import JSONAPIParser, JSONAPIResource
 import hmac
+from datetime import datetime
+import boto3.dynamodb.types
 app = Chalice(app_name='patreon-webhook')
 dynamodb = boto3.resource('dynamodb')
 dynamodb_table = dynamodb.Table(os.environ.get('APP_TABLE_NAME', ''))
@@ -48,8 +50,22 @@ def add_character():
     response =find_by_discordId(request)['Items']
     if len(response) == 0:
         return Response(body={'message': 'DiscordId did not refer to a patron'}, status_code=400, headers={'Content-Type':'application/json'})
-    
-    return 'Next check'
+    item_val={"PartKey": response[0]['PartKey'], "SortKey": request.get('sortKey'), 'CharacterName':request.get('characterName')}
+    if(request.get('category') is not None):
+        item_val['Category']= request.get('category')
+    if(request.get('creationDate') is not None):
+        datetime.fromisoformat(request.get('creationDate')) # so that it will be validated
+        item_val['CreationDate'] =request.get('creationDate')
+
+    if(request.get('meta') is not None):
+        item_val['CharacterMeta'] = { 'Artist':request.get('meta').get('artist',None),'Source':request.get('meta').get('source',None),'Comments':request.get('meta').get('comments',None)}
+    if(request.get('image') is not None):
+        item_val['Image']= request.get('image')
+
+    return dynamodb_table.put_item(
+        Item =item_val,
+        ReturnValues="ALL_OLD"
+    )
 
 def find_by_discordId(request):
     return dynamodb_table.query(IndexName='discordIdIndex',
