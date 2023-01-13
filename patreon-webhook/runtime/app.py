@@ -1,6 +1,6 @@
 import os
 import boto3
-from chalice import Chalice
+from chalice import Chalice, Response
 from patreon.jsonapi.parser import JSONAPIParser, JSONAPIResource
 import hmac
 app = Chalice(app_name='patreon-webhook')
@@ -45,10 +45,26 @@ def webhook_callback():
 @app.route('/character',methods = ['POST','PUT'])
 def add_character():
     request = app.current_request.json_body
+    response =find_by_discordId(request)['Items']
+    if len(response) == 0:
+        return Response(body={'message': 'DiscordId did not refer to a patron'}, status_code=400, headers={'Content-Type':'application/json'})
+    
+    return 'Next check'
+
+def find_by_discordId(request):
     return dynamodb_table.query(IndexName='discordIdIndex',
     KeyConditions={"DiscordId": 
     {'AttributeValueList':[str(request.get('discordId')  ) ],
-    'ComparisonOperator':'EQ'}})
+    'ComparisonOperator':'EQ'}},
+    QueryFilter={
+        'SortKey':{
+            'AttributeValueList':[
+                'INFO'
+            ],
+            'ComparisonOperator':'EQ'
+        }
+    }
+    )
 
 def parseJSONAPI(member:JSONAPIResource):
     patron = dict();
