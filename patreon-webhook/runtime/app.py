@@ -5,7 +5,7 @@ from patreon.jsonapi.parser import JSONAPIParser, JSONAPIResource
 import hmac
 from datetime import datetime
 import boto3.dynamodb.types
-from boto3.dynamodb.conditions import Key
+from boto3.dynamodb.conditions import Key, Attr
 app = Chalice(app_name='patreon-webhook')
 dynamodb = boto3.resource('dynamodb')
 dynamodb_table = dynamodb.Table(os.environ.get('APP_TABLE_NAME', ''))
@@ -77,18 +77,15 @@ def remove_character():
     'SortKey':answer['Items'][0]['SortKey']})
 def find_by_discordId(request):
     return dynamodb_table.query(IndexName='discordIdIndex',
-    KeyConditions={"DiscordId": 
-    {'AttributeValueList':[str(request.get('discordId')  ) ],
-    'ComparisonOperator':'EQ'}},
-    QueryFilter={
-        'SortKey':{
-            'AttributeValueList':[
-                'INFO'
-            ],
-            'ComparisonOperator':'EQ'
-        }
-    }
-    )
+    KeyConditionExpression=Key("DiscordId").eq(str(request.get('discordId'))),
+    FilterExpression=Attr('SortKey').eq('INFO'))
+@app.route('/member',methods=['PUT'])
+def find_member():
+    request = app.current_request.json_body
+    response= find_by_discordId(request)['Items']
+    if len(response) == 0:
+        return Response(body={'message': 'DiscordId did not refer to a patron'}, status_code=400, headers={'Content-Type':'application/json'})
+    return response
 
 def parseJSONAPI(member:JSONAPIResource):
     patron = dict();
