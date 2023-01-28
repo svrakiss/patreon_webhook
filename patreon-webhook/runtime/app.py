@@ -5,6 +5,7 @@ from patreon.jsonapi.parser import JSONAPIParser, JSONAPIResource
 import hmac
 from datetime import datetime
 import boto3.dynamodb.types
+from boto3.dynamodb.conditions import Key
 app = Chalice(app_name='patreon-webhook')
 dynamodb = boto3.resource('dynamodb')
 dynamodb_table = dynamodb.Table(os.environ.get('APP_TABLE_NAME', ''))
@@ -66,7 +67,14 @@ def add_character():
         Item =item_val,
         ReturnValues="ALL_OLD"
     )
-
+@app.route('/character',methods = ['DELETE'])
+def remove_character():
+    request = app.current_request.json_body
+    answer=dynamodb_table.query(IndexName='infoOrCharacterIDIndex',
+    KeyConditionExpression=Key('SortKey').eq(request.get('sortKey')))
+    print(answer)
+    return dynamodb_table.delete_item(Key={'PartKey':answer['Items'][0]['PartKey'],
+    'SortKey':answer['Items'][0]['SortKey']})
 def find_by_discordId(request):
     return dynamodb_table.query(IndexName='discordIdIndex',
     KeyConditions={"DiscordId": 
