@@ -6,6 +6,6 @@ except ImportError:
 from stacks.chaliceapp import ChaliceApp
 
 app = cdk.App()
-ChaliceApp(app, 'patreon-webhook')
+ChaliceApp(app, 'patreon-connection')
 
 app.synth()

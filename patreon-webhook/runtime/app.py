@@ -6,45 +6,9 @@ import hmac
 from datetime import datetime
 import boto3.dynamodb.types
 from boto3.dynamodb.conditions import Key, Attr
-app = Chalice(app_name='patreon-webhook')
+app = Chalice(app_name='patreon-connection')
 dynamodb = boto3.resource('dynamodb')
 dynamodb_table = dynamodb.Table(os.environ.get('APP_TABLE_NAME', ''))
-ssmclient = boto3.client('ssm')
-secret = ssmclient.get_parameter(Name='/config/patreon-webhook/secret',WithDecryption=True)
-secret:str  = secret['Parameter']['Value']
-@app.route('/callback', methods=['POST','GET','PUT'])
-
-def webhook_callback():
-    request = app.current_request.json_body
-    raw_body = app.current_request.raw_body
-    try:
-        # print(app.current_request.headers.get('X-Patreon-Signature'))
-        # print(f'raw body {raw_body}')
-        # hmac_test =hmac.new(bytes(secret,'utf-8'),msg=raw_body,digestmod='md5')
-        # print(f'hmac normal digest: {hmac_test.digest()}')
-        # print(f'hex digest: {hmac_test.hexdigest()}')
-        if(not hmac.compare_digest(app.current_request.headers.get('X-Patreon-Signature'),
-        hmac.new(key=bytes(secret,'utf-8'),msg=raw_body,digestmod='md5').hexdigest())):
-            return Response(body={'message':'UnAuthorized'},  status_code=401, headers={'Content-Type':'application/json'})
-        print("Passed the test")
-    except:
-        print("Exception thrown")
-        pass
-    print(str(request))
-    member = JSONAPIParser(request)
-    member_response = parseJSONAPI(member.data())
-    updateExp= 'SET #StatusAtt = :status_val, Tier= :tier_val'
-    attVals = {':status_val':member_response.get('Status'), ':tier_val':member_response.get('Tier',[])}
-    if(member_response.get('DiscordId') is not None):
-        updateExp= updateExp + ', DiscordId= :discord_val'
-        attVals[':discord_val'] = member_response.get('DiscordId')
-    return dynamodb_table.update_item(Key = {"PartKey":member_response.get('PartKey'),"SortKey":member_response.get('SortKey')},
-    UpdateExpression=updateExp,
-    ExpressionAttributeNames={"#StatusAtt":"Status"},
-     ExpressionAttributeValues=attVals
-     , ReturnValues="ALL_NEW"
-    )
-
 @app.route('/character',methods = ['POST','PUT'])
 def add_character():
     request = app.current_request.json_body
