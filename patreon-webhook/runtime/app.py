@@ -6,6 +6,10 @@ import hmac
 from datetime import datetime
 import boto3.dynamodb.types
 from boto3.dynamodb.conditions import Key, Attr
+from aws_xray_sdk.core import xray_recorder
+from aws_xray_sdk.core import patch_all
+patch_all()
+
 app = Chalice(app_name='patreon-connection')
 dynamodb = boto3.resource('dynamodb')
 dynamodb_table = dynamodb.Table(os.environ.get('APP_TABLE_NAME', ''))

@@ -31,6 +31,8 @@ class ChaliceApp(cdk.Stack):
         )
         rest_api = self.chalice.sam_template.get_resource('RestAPI')
         rest_api.tracing_enabled=True
+        api_handler = self.chalice.sam_template.get_resource('APIHandler')
+        api_handler.tracing = 'Active'
         self.dynamodb_table.grant_read_write_data(
             self.chalice.get_role('DefaultRole')
         )
