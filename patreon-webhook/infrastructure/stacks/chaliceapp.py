@@ -26,8 +26,11 @@ class ChaliceApp(cdk.Stack):
                 'environment_variables': {
                     'APP_TABLE_NAME': self.dynamodb_table.table_name
                 }
-            }
+            },
+
         )
+        rest_api = self.chalice.sam_template.get_resource('RestAPI')
+        rest_api.tracing_enabled=True
         self.dynamodb_table.grant_read_write_data(
             self.chalice.get_role('DefaultRole')
         )
