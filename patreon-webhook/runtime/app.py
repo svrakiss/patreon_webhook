@@ -6,12 +6,18 @@ import hmac
 from datetime import datetime
 import boto3.dynamodb.types
 from boto3.dynamodb.conditions import Key, Attr
+from aws_xray_sdk.core import xray_recorder
+
+from aws_xray_sdk.core import patch_all
+patch_all()
 app = Chalice(app_name='patreon-webhook')
 dynamodb = boto3.resource('dynamodb')
 dynamodb_table = dynamodb.Table(os.environ.get('APP_TABLE_NAME', ''))
 ssmclient = boto3.client('ssm')
+xray_recorder.begin_segment('init')
 secret = ssmclient.get_parameter(Name='/config/patreon-webhook/secret',WithDecryption=True)
 secret:str  = secret['Parameter']['Value']
+xray_recorder.end_segment()
 @app.route('/callback', methods=['POST','GET','PUT'])
 
 def webhook_callback():
