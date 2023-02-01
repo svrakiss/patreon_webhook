@@ -63,6 +63,9 @@ class ChaliceApp(cdk.Stack):
                 )
             ])
         )
+        secret = ssm.StringParameter.from_secure_string_parameter_attributes(self, "webhookSecret",parameter_name='/config/patreon-webhook/secret')
+        secret.grant_read(self.role)
+
 
     def _create_ddb_table(self):
         tableName = ssm.StringParameter.value_for_string_parameter(self,parameter_name="/config/ValidatorMS-production/spring.cloud.aws.dynamodb.tableName")
