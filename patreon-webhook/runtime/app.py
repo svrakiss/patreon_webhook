@@ -18,7 +18,7 @@ app.debug = True
 @app.on_dynamodb_record(os.environ.get('APP_STREAM_ARN'),name='stateChange')
 def find_all(event: DynamoDBEvent):
     for r in event:
-        if r.event_name != "MODIFY" or r.keys.get('SortKey') != "INFO":
+        if r.event_name != "MODIFY" or r.keys.get('SortKey') != {"S":"INFO"}: # put this in the filter criteria
             continue
         result = decide(r)
         if result == "disapprove" or result == "approve":
