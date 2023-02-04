@@ -8,6 +8,7 @@ import boto3.dynamodb.types
 from boto3.dynamodb.conditions import Key, Attr
 from aws_xray_sdk.core import xray_recorder
 from aws_xray_sdk.core import patch_all
+from chalicelib.table import Patron
 patch_all()
 
 app = Chalice(app_name='patreon-connection')
@@ -20,21 +21,25 @@ def add_character():
     if len(response) == 0:
         return Response(body={'message': 'DiscordId did not refer to a patron'}, status_code=400, headers={'Content-Type':'application/json'})
     item_val={"PartKey": response[0]['PartKey'], "SortKey": request.get('sortKey'), 'CharacterName':request.get('characterName')}
+    item=Patron(response[0]['PartKey'],request.get('sortKey'))
+    item.character_name= request.get('CharacterName')
     if(request.get('category') is not None):
         item_val['Category']= request.get('category')
+        item.category = request.get('category')
     if(request.get('creationDate') is not None):
-        datetime.fromisoformat(request.get('creationDate')) # so that it will be validated
+        item.creation_date =datetime.fromisoformat(request.get('creationDate')) # so that it will be validated
         item_val['CreationDate'] =request.get('creationDate')
-
+    # the problem with boto is it doesn't let you upsert Map Attributes
     if(request.get('meta') is not None):
+        item.meta = request.get('meta')
         item_val['CharacterMeta'] = { 'Artist':request.get('meta').get('artist',None),'Source':request.get('meta').get('source',None),'Comments':request.get('meta').get('comments',None)}
     if(request.get('image') is not None):
         item_val['Image']= request.get('image')
-
-    return dynamodb_table.put_item(
-        Item =item_val,
-        ReturnValues="ALL_OLD"
-    )
+        item.image = request.get('image')
+    if response[0]['Status'] == "override" or response[0]['Status'] == 'active_patron':
+        item.pat_stats= "YEP"
+    
+    return item.save()
 @app.route('/character',methods = ['DELETE'])
 def remove_character():
     request = app.current_request.json_body
