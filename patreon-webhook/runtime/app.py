@@ -26,14 +26,22 @@ def find_all(event: DynamoDBEvent):
         result = decide(r)
         if result == "approve": # calculate PatStats
             app.log.debug(f"New {r.new_image}")
-            to_change = dynamodb_table.query(
-                KeyConditionExpression=Key('PartKey').eq(r.keys.get('PartKey').get("S")).__and__(Key('SortKey').begins_with('CHANNEL'))
-            ) # this can be a lot...
             to_change_actually =Patron.query(r.keys.get('PartKey').get('S'),Patron.sort_key.startswith("CHANNEL"))
-            app.log.debug(to_change)
+            for i in to_change_actually:
+                i.update(
+                    [
+                        Patron.pat_stats.set("YEP")
+                    ]
+                )
             app.log.debug(to_change_actually)
-        else:
-            print("BNBNB")
+        if result == "disapprove":
+            to_change_actually =Patron.query(r.keys.get('PartKey').get('S'),Patron.sort_key.startswith("CHANNEL"))
+            for i in to_change_actually:
+                i.update(
+                    [
+                        Patron.pat_stats.remove()
+                    ]
+                )
             # remove PatStats
 
 # dynamodb_table.query(IndexName='Category',
