@@ -24,21 +24,19 @@ class ChaliceApp(cdk.Stack):
             self, 'ChaliceApp', source_dir=RUNTIME_SOURCE_DIR,
             stage_config={
                 'environment_variables': {
-                    'APP_TABLE_NAME': self.dynamodb_table.table_name
+                    'APP_TABLE_NAME': self.dynamodb_table.table_name,
+                    'APP_STREAM_ARN':self.dynamodb_table.table_stream_arn
                 },
                 'iam_role_arn':role.role_arn,
-                'manage_iam_role':False
+                'manage_iam_role':False,
+                'xray':True
             },
 
         )
-        rest_api = self.chalice.sam_template.get_resource('RestAPI')
-        rest_api.tracing_enabled=True
-        api_handler = self.chalice.sam_template.get_resource('APIHandler')
-        api_handler.tracing = 'Active'
         self.dynamodb_table.grant_read_write_data(
             role
         )
-       
+        self.dynamodb_table.grant_stream_read(role)
         role.add_managed_policy(
             iam.ManagedPolicy.from_aws_managed_policy_name("AWSXRayDaemonWriteAccess")
         )
@@ -66,7 +64,8 @@ class ChaliceApp(cdk.Stack):
 
     def _create_ddb_table(self):
         tableName = ssm.StringParameter.value_for_string_parameter(self,parameter_name="/config/ValidatorMS-production/spring.cloud.aws.dynamodb.tableName")
-        dynamodb_table = dynamodb.Table.from_table_name(self,"chaliceTable",table_name=tableName)
+        stream_arn = ssm.StringParameter.value_for_string_parameter(self,parameter_name="/config/ValidatorMS-production/TableStreamArn")
+        dynamodb_table = dynamodb.Table.from_table_attributes(self,"chaliceTable",table_name=tableName,table_stream_arn=stream_arn)
         cdk.CfnOutput(self, 'AppTableName',
                       value=dynamodb_table.table_name)
         return dynamodb_table
