@@ -22,6 +22,7 @@ def find_all(event: DynamoDBEvent):
     for r in event:
         if r.event_name != "MODIFY" or r.keys.get('SortKey') != {"S":"INFO"}: # put this in the filter criteria
             # "SortKey": ["INFO"]
+            app.log.debug("Shouldn't be here")
             continue
         result = decide(r)
         if result == "approve": # calculate PatStats
@@ -43,7 +44,8 @@ def find_all(event: DynamoDBEvent):
                     ]
                 )
             # remove PatStats
-
+        if result == "nothing":
+            app.log("shouldn't be here")
 # dynamodb_table.query(IndexName='Category',
 #     KeyConditionExpression=Key('Category').eq(arg),
 #     FilterExpression=Attr('PatStats').exists()
