@@ -1,5 +1,6 @@
 {
     "python.analysis.extraPaths": [
+        "./patreon-webhook/runtime",
         "./patreon-webhook/runtime"
     ]
 }

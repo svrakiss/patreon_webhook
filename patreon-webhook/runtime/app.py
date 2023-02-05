@@ -60,6 +60,12 @@ def find_member():
         return Response(body={'message': 'DiscordId did not refer to a patron'}, status_code=400, headers={'Content-Type':'application/json'})
     return response
 
+
+@app.route("/poll",methods=['PUT'])
+def get_poll():
+    return [ x.to_json() for x in Patron.cat_index.query(app.current_request.json_body.get('category','Cartoons'),filter_condition=Patron.pat_stats.exists())]
+
+
 def parseJSONAPI(member:JSONAPIResource):
     patron = dict();
     grab_discord_id = lambda x: x.attribute('social_connections').get('discord').get('user_id',None)
