@@ -1,7 +1,10 @@
 import os
-
+import json
 from aws_cdk import aws_dynamodb as dynamodb
 import aws_cdk.aws_ssm as ssm
+import aws_cdk.aws_lambda as _lambda
+from aws_cdk.aws_lambda import CfnEventSourceMapping
+from aws_cdk.aws_sam import CfnFunction
 try:
     from aws_cdk import core as cdk
 except ImportError:
@@ -60,7 +63,50 @@ class ChaliceApp(cdk.Stack):
                 )
             ])
         )
+        # event_list=[x for x in self.chalice.sam_template.node.find_all() if isinstance(x,_lambda.CfnEventSourceMapping)]
+
         
+            # this name is defined in the other project, but it works here.
+        l2 :CfnFunction =self.chalice.get_resource('StateChange')
+
+        l2.add_override("Events.StateChangeDynamodbEventSource.Properties.FilterCriteria",
+                {"Filters":[
+                            # pattern for approval state change
+                        {
+                        "Pattern": json.dumps(
+                            {"dynamodb":
+                            {"NewImage":
+                            {"Status":{"S":["active_patron"]}}
+                            ,
+                            "OldImage":
+                            {"Status":
+                            {"S":
+                            [{"anything-but":["active_patron"]}
+                            ]}
+                            }
+                            }
+                            }
+                        )
+                        }
+                            ,
+                        # pattern for disapproval state change
+                        {
+                        "Pattern":json.dumps(
+                            {"dynamodb":
+                            {"OldImage":
+                            {"Status":{"S":["active_patron"]}
+                            },
+                            "NewImage":{
+                                "Status":{"S":[{"anything-but":["active_patron"]}]}
+                            }
+                            }
+                            }
+                        )
+                      }
+                    ]
+                }
+                    )
+     
 
     def _create_ddb_table(self):
         tableName = ssm.StringParameter.value_for_string_parameter(self,parameter_name="/config/ValidatorMS-production/spring.cloud.aws.dynamodb.tableName")
