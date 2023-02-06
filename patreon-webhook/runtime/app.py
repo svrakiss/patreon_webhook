@@ -34,7 +34,7 @@ def add_character():
     # the problem with boto is it doesn't let you upsert Map Attributes
     if(request.get('meta') is not None):
         item_val['CharacterMeta'] = { 'Artist':request.get('meta').get('artist',None),'Source':request.get('meta').get('source',None),'Comments':request.get('meta').get('comments',None)}
-        item.meta = item_val['CharacterMeta']
+        item.meta = request.get('meta')
     if(request.get('image') is not None):
         item_val['Image']= request.get('image')
         item.image = request.get('image')
