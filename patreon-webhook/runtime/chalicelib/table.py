@@ -4,9 +4,9 @@ import os
 from chalicelib.custom import AWSISODateTimeAttribute
 from chalicelib.index import CategoryIndex
 class CharacterMeta(MapAttribute):
-    source = UnicodeAttribute(null = True)
-    artist = UnicodeAttribute(null = True)
-    comments = UnicodeAttribute(null = True)
+    source = UnicodeAttribute(null = True,attr_name="Source")
+    artist = UnicodeAttribute(null = True,attr_name="Artist")
+    comments = UnicodeAttribute(null = True,attr_name="Comments")
 class Patron(Model):
     class Meta:
         table_name = os.environ.get("APP_TABLE_NAME")
