@@ -3,12 +3,14 @@ import boto3
 from chalice import Chalice, Response
 from patreon.jsonapi.parser import JSONAPIParser, JSONAPIResource
 import hmac
-from datetime import datetime
+from datetime import datetime,timezone
+from pynamodb.settings import default_settings_dict
 import boto3.dynamodb.types
 from boto3.dynamodb.conditions import Key, Attr
 from aws_xray_sdk.core import xray_recorder
 from aws_xray_sdk.core import patch_all
 from chalicelib.table import Patron
+from chalicelib.custom import AWSISODateTimeAttribute
 patch_all()
 
 app = Chalice(app_name='patreon-connection')
@@ -28,7 +30,7 @@ def add_character():
         item.category = request.get('category')
     if(request.get('creationDate') is not None):
         item.creation_date =datetime.fromisoformat(request.get('creationDate')) # so that it will be validated
-        item_val['CreationDate'] =request.get('creationDate')
+        item_val['CreationDate'] =item.creation_date.astimezone(timezone.utc).isoformat(timespec='milliseconds').replace("+00:00", "Z")
     # the problem with boto is it doesn't let you upsert Map Attributes
     if(request.get('meta') is not None):
         item.meta = request.get('meta')
@@ -38,8 +40,12 @@ def add_character():
         item.image = request.get('image')
     if response[0]['Status'] == "override" or response[0]['Status'] == 'active_patron':
         item.pat_stats= "YEP"
-    
-    return item.save()
+        item_val['PatStats']="YEP"
+    return dynamodb_table.put_item(
+        Item =item_val,
+        ReturnValues="ALL_OLD"
+    )
+
 @app.route('/character',methods = ['DELETE'])
 def remove_character():
     request = app.current_request.json_body
