@@ -24,7 +24,7 @@ def add_character():
         return Response(body={'message': 'DiscordId did not refer to a patron'}, status_code=400, headers={'Content-Type':'application/json'})
     item_val={"PartKey": response[0]['PartKey'], "SortKey": request.get('sortKey'), 'CharacterName':request.get('characterName')}
     item=Patron(response[0]['PartKey'],request.get('sortKey'))
-    item.character_name= request.get('CharacterName')
+    item.character_name= request.get('characterName')
     if(request.get('category') is not None):
         item_val['Category']= request.get('category')
         item.category = request.get('category')
