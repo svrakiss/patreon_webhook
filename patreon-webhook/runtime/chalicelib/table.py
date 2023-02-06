@@ -3,9 +3,9 @@ from pynamodb.attributes import UnicodeAttribute,MapAttribute, ListAttribute, UT
 import os
 from chalicelib.custom import AWSISODateTimeAttribute
 class CharacterMeta(MapAttribute):
-    source = UnicodeAttribute(null = True)
-    artist = UnicodeAttribute(null = True)
-    comments = UnicodeAttribute(null = True)
+    source = UnicodeAttribute(null = True,attr_name="Source")
+    artist = UnicodeAttribute(null = True,attr_name="Artist")
+    comments = UnicodeAttribute(null = True,attr_name="Comments")
 class Patron(Model):
     class Meta:
         table_name = os.environ.get("APP_TABLE_NAME")
