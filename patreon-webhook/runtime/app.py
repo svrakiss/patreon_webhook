@@ -33,8 +33,8 @@ def add_character():
         item_val['CreationDate'] =item.creation_date.astimezone(timezone.utc).isoformat(timespec='milliseconds').replace("+00:00", "Z")
     # the problem with boto is it doesn't let you upsert Map Attributes
     if(request.get('meta') is not None):
-        item.meta = request.get('meta')
         item_val['CharacterMeta'] = { 'Artist':request.get('meta').get('artist',None),'Source':request.get('meta').get('source',None),'Comments':request.get('meta').get('comments',None)}
+        item.meta = item_val['CharacterMeta']
     if(request.get('image') is not None):
         item_val['Image']= request.get('image')
         item.image = request.get('image')
@@ -57,7 +57,8 @@ def remove_character():
 def find_by_discordId(request):
     return dynamodb_table.query(IndexName='discordIdIndex',
     KeyConditionExpression=Key("DiscordId").eq(str(request.get('discordId'))),
-    FilterExpression=Attr('SortKey').eq('INFO'))
+    FilterExpression=Attr('SortKey').eq('INFO'),
+    Limit=1)
 @app.route('/member',methods=['PUT'])
 def find_member():
     request = app.current_request.json_body
