@@ -38,7 +38,7 @@ def add_character():
     if(request.get('image') is not None):
         item_val['Image']= request.get('image')
         item.image = request.get('image')
-    if response[0]['Status'] == "override" or response[0]['Status'] == 'active_patron':
+    if response[0]['Status'] == "OVERRIDE" or response[0]['Status'] == 'active_patron':
         item.pat_stats= "YEP"
         item_val['PatStats']="YEP"
     return dynamodb_table.put_item(
@@ -78,11 +78,8 @@ def parseJSONAPI(member:JSONAPIResource):
     patron = dict();
     grab_discord_id = lambda x: x.attribute('social_connections').get('discord').get('user_id',None)
     has_discord = lambda x: x.attribute('social_connections').get('discord') is not None;
-
-    if(member.attribute("patron_status") is None):
-        # this is probably the creator
-        patron['Status']="override"
-    else:
+    # The creator, apparently, isn't in the system
+    if(member.attribute("patron_status") is not None):
         patron['Status'] = member.attribute("patron_status")
         if(member.relationship("currently_entitled_tiers") is not None):
             if(len(member.relationship("currently_entitled_tiers"))>0):
