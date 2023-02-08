@@ -2,11 +2,12 @@ from pynamodb.models import Model
 from pynamodb.attributes import UnicodeAttribute,MapAttribute, ListAttribute, UTCDateTimeAttribute
 import os
 from chalicelib.custom import AWSISODateTimeAttribute
-from chalicelib.index import CategoryIndex
+from chalicelib.index import CategoryIndex,UserIdIndex,DiscordIdIndex
 class CharacterMeta(MapAttribute):
     source = UnicodeAttribute(null = True,attr_name="Source")
     artist = UnicodeAttribute(null = True,attr_name="Artist")
     comments = UnicodeAttribute(null = True,attr_name="Comments")
+    image= UnicodeAttribute(null=True,attr_name="Image")
 class Patron(Model):
     class Meta:
         table_name = os.environ.get("APP_TABLE_NAME")
@@ -23,4 +24,7 @@ class Patron(Model):
     character_name = UnicodeAttribute(null=True,attr_name="CharacterName")
     image = UnicodeAttribute(null=True,attr_name="Image")
     name = UnicodeAttribute(null = True,attr_name="Name")
+    user_id= UnicodeAttribute(null=True,attr_name="UserId")
     cat_index = CategoryIndex()
+    user_index= UserIdIndex()
+    discord_index=DiscordIdIndex()

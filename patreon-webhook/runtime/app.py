@@ -19,11 +19,17 @@ dynamodb_table = dynamodb.Table(os.environ.get('APP_TABLE_NAME', ''))
 @app.route('/character',methods = ['POST','PUT'])
 def add_character():
     request = app.current_request.json_body
-    response =find_by_discordId(request)['Items']
-    if len(response) == 0:
-        return Response(body={'message': 'DiscordId did not refer to a patron'}, status_code=400, headers={'Content-Type':'application/json'})
-    item_val={"PartKey": response[0]['PartKey'], "SortKey": request.get('sortKey'), 'CharacterName':request.get('characterName')}
-    item=Patron(response[0]['PartKey'],request.get('sortKey'))
+    if request.get('discordId') !=None:
+        response =find_by_discordId_pynamo(request)
+        if len(response) == 0:
+            return Response(body={'message': 'DiscordId did not refer to a patron'}, status_code=400, headers={'Content-Type':'application/json'})
+    elif request.get('userId') != None:
+        response = find_by_userId(request)
+        if len(response)==0:
+            return Response(body={'message': 'UserId did not refer to a patron'}, status_code=400, headers={'Content-Type':'application/json'})
+
+    item_val={"PartKey": response[0].part_key, "SortKey": request.get('sortKey'), 'CharacterName':request.get('characterName')}
+    item=Patron(response[0].part_key,request.get('sortKey'))
     item.character_name= request.get('characterName')
     if(request.get('category') is not None):
         item_val['Category']= request.get('category')
@@ -38,7 +44,7 @@ def add_character():
     if(request.get('image') is not None):
         item_val['Image']= request.get('image')
         item.image = request.get('image')
-    if response[0]['Status'] == "OVERRIDE" or response[0]['Status'] == 'active_patron':
+    if response[0].status == "OVERRIDE" or response[0].status == 'active_patron':
         item.pat_stats= "YEP"
         item_val['PatStats']="YEP"
     return dynamodb_table.put_item(
@@ -59,12 +65,22 @@ def find_by_discordId(request):
     KeyConditionExpression=Key("DiscordId").eq(str(request.get('discordId'))),
     FilterExpression=Attr('SortKey').eq('INFO'),
     Limit=1)
+def find_by_discordId_pynamo(request):
+    return [ x for x in Patron.discord_index.query(str(request.get('discordId')), filter_condition=Patron.sort_key=='INFO')]
+def find_by_userId(request):
+    return [x for x in Patron.user_index.query(str(request.get('userId')),filter_condition=Patron.sort_key=='INFO')]
 @app.route('/member',methods=['PUT'])
 def find_member():
     request = app.current_request.json_body
-    response= find_by_discordId(request)['Items']
-    if len(response) == 0:
-        return Response(body={'message': 'DiscordId did not refer to a patron'}, status_code=400, headers={'Content-Type':'application/json'})
+    response = None
+    if request.get('discordId') !=None:
+        response =find_by_discordId_pynamo(request)
+        if len(response) == 0:
+            return Response(body={'message': 'DiscordId did not refer to a patron'}, status_code=400, headers={'Content-Type':'application/json'})
+    elif request.get('userId') != None:
+        response = find_by_userId(request)
+        if len(response)==0:
+            return Response(body={'message': 'UserId did not refer to a patron'}, status_code=400, headers={'Content-Type':'application/json'})
     return response
 
 
