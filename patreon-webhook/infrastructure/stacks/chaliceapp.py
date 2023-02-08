@@ -68,9 +68,7 @@ class ChaliceApp(cdk.Stack):
         
             # this name is defined in the other project, but it works here.
         l2 :CfnFunction =self.chalice.get_resource('StateChange')
-
-        l2.add_override("Events.StateChangeDynamodbEventSource.Properties.FilterCriteria",
-                {"Filters":[
+        filters = {"Filters":[
                             # pattern for approval state change
                         {
                         "Pattern": json.dumps(
@@ -105,8 +103,26 @@ class ChaliceApp(cdk.Stack):
                       }
                     ]
                 }
-                    )
-     
+        l2.add_override("Events",
+        {"StateChangeDynamodbEventSource":
+        {"Properties":
+        {"StartingPosition":"LATEST",
+        "Stream":self.dynamodb_table.table_stream_arn,
+        "MaximumBatchingWindowInSeconds":0,
+        "FilterCriteria":filters},
+        "Type":"DynamoDB"}})
+        # l2.events={"StateChangeDynamodbEventSource": CfnFunction.EventSourceProperty(
+        #         properties=CfnFunction.DynamoDBEventProperty(
+        #             starting_position="LATEST",
+        #             stream=self.dynamodb_table.table_stream_arn
+        #         ),
+        #         type="DynamoDB"
+        #         )
+        #     }
+        l2.events=None
+        
+                
+               
 
     def _create_ddb_table(self):
         tableName = ssm.StringParameter.value_for_string_parameter(self,parameter_name="/config/ValidatorMS-production/spring.cloud.aws.dynamodb.tableName")

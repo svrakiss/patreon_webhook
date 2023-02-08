@@ -45,11 +45,7 @@ def find_all(event: DynamoDBEvent):
                 )
             # remove PatStats
         if result == "nothing":
-            app.log("shouldn't be here")
-# dynamodb_table.query(IndexName='Category',
-#     KeyConditionExpression=Key('Category').eq(arg),
-#     FilterExpression=Attr('PatStats').exists()
-# )
+            app.log.debug("shouldn't be here")
 def decide(resp:DynamoDBRecord):
     if resp.old_image.get('Status').get('S') == 'active_patron':
         if resp.new_image.get('Status').get('S') != 'active_patron':
