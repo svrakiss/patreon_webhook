@@ -66,9 +66,9 @@ def find_by_discordId(request):
     FilterExpression=Attr('SortKey').eq('INFO'),
     Limit=1)
 def find_by_discordId_pynamo(request):
-    return [ x for x in Patron.discord_index.query(str(request.get('discordId')), filter_condition=Patron.sort_key=='INFO')]
+    return [ x for x in Patron.discord_index.query(str(request.get('discordId')), filter_condition=Patron.discord_index.sort_key=='INFO')]
 def find_by_userId(request):
-    return [x for x in Patron.user_index.query(str(request.get('userId')),filter_condition=Patron.sort_key=='INFO')]
+    return [x for x in Patron.user_index.query(str(request.get('userId')),filter_condition=Patron.user_index.sort_key=='INFO')]
 @app.route('/member',methods=['PUT'])
 def find_member():
     request = app.current_request.json_body

@@ -17,8 +17,8 @@ class UserIdIndex(GlobalSecondaryIndex):
         write_capacity_units = 1
     user_id= UnicodeAttribute(hash_key=True,attr_name="UserId")
     tier = ListAttribute(null = True,attr_name="Tier")
-    part_key = UnicodeAttribute(hash_key=True,attr_name="PartKey")
-    sort_key = UnicodeAttribute(range_key=True,attr_name="SortKey")
+    part_key = UnicodeAttribute(attr_name="PartKey")
+    sort_key = UnicodeAttribute(attr_name="SortKey")
     status = UnicodeAttribute(null=True,attr_name="Status")
 
 class DiscordIdIndex(GlobalSecondaryIndex):
@@ -28,3 +28,4 @@ class DiscordIdIndex(GlobalSecondaryIndex):
         read_capacity_units = 2
         write_capacity_units = 1
     discord_id = UnicodeAttribute(hash_key=True,attr_name="DiscordId")
+    sort_key = UnicodeAttribute(attr_name="SortKey")
