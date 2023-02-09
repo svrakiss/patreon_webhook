@@ -81,8 +81,7 @@ def find_member():
         response = find_by_userId(request)
         if len(response)==0:
             return Response(body={'message': 'UserId did not refer to a patron'}, status_code=400, headers={'Content-Type':'application/json'})
-    return response
-
+    return response[0].to_json()
 
 @app.route("/poll",methods=['PUT'])
 def get_poll():
