@@ -39,19 +39,28 @@ def webhook_callback():
     print(str(request))
     member = JSONAPIParser(request)
     member_response = parseJSONAPI(member.data())
-    updateExp= 'SET #StatusAtt = :status_val, Tier= :tier_val'
-    attVals = {':status_val':member_response.get('Status'), ':tier_val':member_response.get('Tier',[])}
+    updateExp= 'SET Tier= :tier_val'
+    attVals = { ':tier_val':member_response.get('Tier',[])}
     if(member_response.get('DiscordId') is not None):
         updateExp= updateExp + ', DiscordId= :discord_val'
         attVals[':discord_val'] = member_response.get('DiscordId')
     if(member_response.get('UserId') !=None):
         updateExp = updateExp + ', UserId= :user_val'
         attVals[':user_val'] = member_response.get('UserId')
-    return dynamodb_table.update_item(Key = {"PartKey":member_response.get('PartKey'),"SortKey":member_response.get('SortKey')},
-    UpdateExpression=updateExp,
-    ExpressionAttributeNames={"#StatusAtt":"Status"},
-     ExpressionAttributeValues=attVals
-     , ReturnValues="ALL_NEW"
+    if member_response.get('Status') !=None:
+        attVals[':status_val']=member_response.get('Status')
+        updateExp = updateExp + ', #StatusAtt = :status_val' 
+        return dynamodb_table.update_item(Key = {"PartKey":member_response.get('PartKey'),"SortKey":member_response.get('SortKey')},
+        UpdateExpression=updateExp,
+        ExpressionAttributeNames={"#StatusAtt":"Status"},
+        ExpressionAttributeValues=attVals
+        , ReturnValues="ALL_NEW"
+        )
+    return dynamodb_table.update_item(
+        Key = {"PartKey":member_response.get('PartKey'),"SortKey":member_response.get('SortKey')},
+        UpdateExpression=updateExp,
+        ExpressionAttributeValues=attVals,
+        ReturnValues="ALL_NEW"
     )
 
 @app.route('/character',methods = ['POST','PUT'])
@@ -101,10 +110,7 @@ def parseJSONAPI(member:JSONAPIResource):
     grab_discord_id = lambda x: x.attribute('social_connections').get('discord').get('user_id',None)
     has_discord = lambda x: x.attribute('social_connections').get('discord') is not None;
 
-    if(member.attribute("patron_status") is None):
-        # this is probably the creator
-        patron['Status']="override"
-    else:
+    if(member.attribute("patron_status") is not None):
         patron['Status'] = member.attribute("patron_status")
         if(member.relationship("currently_entitled_tiers") is not None):
             if(len(member.relationship("currently_entitled_tiers"))>0):
