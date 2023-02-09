@@ -63,93 +63,83 @@ class ChaliceApp(cdk.Stack):
                 )
             ])
         )
-        # event_list=[x for x in self.chalice.sam_template.node.find_all() if isinstance(x,_lambda.CfnEventSourceMapping)]
 
-        
-            # this name is defined in the other project, but it works here.
-        l2 :CfnFunction =self.chalice.get_resource('StateChange')
+
+    def filters(self):
         filters = {"Filters":[
-                            # pattern for approval state change
+                    # pattern for approval state change
+                {
+                "Pattern": json.dumps(
+                    {"dynamodb":
+                    {"NewImage":
+                    {"Status":{"S":["active_patron"]}}
+                    ,
+                    "OldImage":
+                    {"Status":
+                    {"S":
+                    [{"anything-but":["active_patron"]}
+                    ]}
+                    }
+                    }
+                    }
+                )
+                },
+                {
+                    "Pattern":json.dumps(
+                        {"dynamodb":
                         {
-                        "Pattern": json.dumps(
-                            {"dynamodb":
-                            {"NewImage":
-                            {"Status":{"S":["active_patron"]}}
-                            ,
-                            "OldImage":
-                            {"Status":
-                            {"S":
-                            [{"anything-but":["active_patron"]}
-                            ]}
-                            }
-                            }
-                            }
-                        )
-                        },
-                        {
-                            "Pattern":json.dumps(
-                                {"dynamodb":
-                                {
-                                    "NewImage":
-                                    {
-                                        "Status":{"S":["active_patron"]}
-                                    },
-                                    "OldImage":
-                                    {
-                                        "Status":{"S":[None]}
-                                    }
-                                }}
-                            )
-                        },
-                        {
-                            "Pattern":json.dumps(
-                                {"dynamodb":
-                                {
-                                    "NewImage":
-                                    {
-                                        "Status":{"S":["active_patron"]}
-                                    },
-                                    "OldImage":
-                                    {
-                                        "Status":{"S":[{"exists":False}]}
-                                    }
-                                }}
-                            )
-                        }
-                            ,
-                        # pattern for disapproval state change
-                        {
-                        "Pattern":json.dumps(
-                            {"dynamodb":
-                            {"OldImage":
-                            {"Status":{"S":["active_patron"]}
+                            "NewImage":
+                            {
+                                "Status":{"S":["active_patron"]}
                             },
-                            "NewImage":{
-                                "Status":{"S":[{"anything-but":["active_patron"]}]}
+                            "OldImage":
+                            {
+                                "Status":{"S":[None]}
                             }
+                        }}
+                    )
+                },
+                {
+                    "Pattern":json.dumps(
+                        {"dynamodb":
+                        {
+                            "NewImage":
+                            {
+                                "Status":{"S":["active_patron"]}
+                            },
+                            "OldImage":
+                            {
+                                "Status":{"S":[{"exists":False}]}
                             }
-                            }
-                        )
-                      }
-                    ]
+                        }}
+                    )
                 }
-        l2.add_override("Events",
+                    ,
+                # pattern for disapproval state change
+                {
+                "Pattern":json.dumps(
+                    {"dynamodb":
+                    {"OldImage":
+                    {"Status":{"S":["active_patron"]}
+                    },
+                    "NewImage":{
+                        "Status":{"S":[{"anything-but":["active_patron"]}]}
+                    }
+                    }
+                    }
+                )
+                }
+            ]
+        }
+        return {"Resources":
+        {"StateChange":
+            {"Events":
         {"StateChangeDynamodbEventSource":
         {"Properties":
-        {"StartingPosition":"LATEST",
-        "Stream":self.dynamodb_table.table_stream_arn,
-        "MaximumBatchingWindowInSeconds":0,
-        "FilterCriteria":filters},
-        "Type":"DynamoDB"}})
-        # l2.events={"StateChangeDynamodbEventSource": CfnFunction.EventSourceProperty(
-        #         properties=CfnFunction.DynamoDBEventProperty(
-        #             starting_position="LATEST",
-        #             stream=self.dynamodb_table.table_stream_arn
-        #         ),
-        #         type="DynamoDB"
-        #         )
-        #     }
-        l2.events=None
+        {"FilterCriteria":filters}
+        }}
+        }
+        }}
         
                 
                
