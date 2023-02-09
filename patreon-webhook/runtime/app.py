@@ -44,6 +44,9 @@ def webhook_callback():
     if(member_response.get('DiscordId') is not None):
         updateExp= updateExp + ', DiscordId= :discord_val'
         attVals[':discord_val'] = member_response.get('DiscordId')
+    if(member_response.get('UserId') !=None):
+        updateExp = updateExp + ', UserId= :user_val'
+        attVals[':user_val'] = member_response.get('UserId')
     return dynamodb_table.update_item(Key = {"PartKey":member_response.get('PartKey'),"SortKey":member_response.get('SortKey')},
     UpdateExpression=updateExp,
     ExpressionAttributeNames={"#StatusAtt":"Status"},
@@ -112,7 +115,7 @@ def parseJSONAPI(member:JSONAPIResource):
         if(member.relationship('user').attribute('social_connections') is not None):
             if(has_discord(member.relationship('user'))):
                 patron['DiscordId'] = grab_discord_id(member.relationship('user'))
-
+        patron['UserId'] = member.relationship('user').id()
     if(member.attribute("full_name") is not None):
         patron['Name'] = member.attribute("full_name")
     patron['PartKey'] = "PATREON_" + member.id()
