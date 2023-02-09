@@ -47,10 +47,14 @@ def find_all(event: DynamoDBEvent):
         if result == "nothing":
             app.log.debug("shouldn't be here")
 def decide(resp:DynamoDBRecord):
-    if resp.old_image.get('Status').get('S') == 'active_patron':
-        if resp.new_image.get('Status').get('S') != 'active_patron':
+    if resp.old_image.get('Status') == None:
+        if resp.new_image.get('Status') == {'S':'active_patron'}:
+            return "approve"
+        return "nothing"
+    if resp.old_image.get('Status')== {'S':'active_patron'}:
+        if resp.new_image.get('Status')!= {'S': 'active_patron'}:
             return "disapprove"
         return "nothing"
-    if resp.new_image.get('Status').get('S') == 'active_patron':
+    if resp.new_image.get('Status') == {'S':'active_patron'}:
         return "approve"
     return "nothing"

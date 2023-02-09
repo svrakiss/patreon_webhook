@@ -85,6 +85,36 @@ class ChaliceApp(cdk.Stack):
                             }
                             }
                         )
+                        },
+                        {
+                            "Pattern":json.dumps(
+                                {"dynamodb":
+                                {
+                                    "NewImage":
+                                    {
+                                        "Status":{"S":["active_patron"]}
+                                    },
+                                    "OldImage":
+                                    {
+                                        "Status":{"S":[None]}
+                                    }
+                                }}
+                            )
+                        },
+                        {
+                            "Pattern":json.dumps(
+                                {"dynamodb":
+                                {
+                                    "NewImage":
+                                    {
+                                        "Status":{"S":["active_patron"]}
+                                    },
+                                    "OldImage":
+                                    {
+                                        "Status":{"S":[{"exists":False}]}
+                                    }
+                                }}
+                            )
                         }
                             ,
                         # pattern for disapproval state change
