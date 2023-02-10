@@ -21,12 +21,12 @@ app.debug = True
 def find_all(event: DynamoDBEvent):
     for r in event:
         if r.event_name != "MODIFY" or r.keys.get('SortKey') != {"S":"INFO"}: # put this in the filter criteria
-            # "SortKey": ["INFO"]
             app.log.debug("Shouldn't be here")
+            app.log.debug(f"Image {r.new_image}")
             continue
         result = decide(r)
         if result == "approve": # calculate PatStats
-            app.log.debug(f"New {r.new_image}")
+            app.log.debug(f"Approve {r.new_image}")
             to_change_actually =Patron.query(r.keys.get('PartKey').get('S'),Patron.sort_key.startswith("CHANNEL"))
             for i in to_change_actually:
                 i.update(
@@ -36,6 +36,8 @@ def find_all(event: DynamoDBEvent):
                 )
             app.log.debug(to_change_actually)
         if result == "disapprove":
+            app.log.debug(f"Disapprove {r.new_image}")
+
             to_change_actually =Patron.query(r.keys.get('PartKey').get('S'),Patron.sort_key.startswith("CHANNEL"))
             for i in to_change_actually:
                 i.update(
@@ -46,6 +48,9 @@ def find_all(event: DynamoDBEvent):
             # remove PatStats
         if result == "nothing":
             app.log.debug("shouldn't be here")
+            app.log.debug(f"Image {r.new_image}")
+
+
 def decide(resp:DynamoDBRecord):
     if resp.old_image.get('Status') == None:
         if resp.new_image.get('Status') == {'S':'active_patron'}:
