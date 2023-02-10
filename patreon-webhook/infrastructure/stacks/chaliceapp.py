@@ -135,16 +135,17 @@ class ChaliceApp(cdk.Stack):
         }
         return {"Resources":
         {"StateChange":
+        {"Properties":
             {"Events":
         {"StateChangeDynamodbEventSource":
         {"Properties":
         {"FilterCriteria":filters}
         }}
-        }
+        }}
         }}
     def make_template(self):
         import yaml
-        print(self.filters())
+        # print(self.filters())
         with open('extras.yml','w') as outfile:
             return yaml.dump(self.filters(),outfile,allow_unicode=True)
                 
