@@ -1,5 +1,6 @@
 {
     "python.analysis.extraPaths": [
-        "./patreon-webhook/runtime/chalicelib"
+        "./patreon-webhook/runtime/chalicelib",
+        "./patreon-webhook/infrastructure"
     ]
 }

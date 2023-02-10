@@ -5,6 +5,7 @@ import aws_cdk.aws_ssm as ssm
 import aws_cdk.aws_lambda as _lambda
 from aws_cdk.aws_lambda import CfnEventSourceMapping
 from aws_cdk.aws_sam import CfnFunction
+from stacks.construct import MergeableChalice
 try:
     from aws_cdk import core as cdk
 except ImportError:
@@ -23,7 +24,9 @@ class ChaliceApp(cdk.Stack):
         super().__init__(scope, id, **kwargs)
         self.dynamodb_table = self._create_ddb_table()
         role = iam.Role(self,"DeafRole",assumed_by=iam.ServicePrincipal("lambda.amazonaws.com"));
-        self.chalice = Chalice(
+        self.make_template()
+
+        self.chalice = MergeableChalice(
             self, 'ChaliceApp', source_dir=RUNTIME_SOURCE_DIR,
             stage_config={
                 'environment_variables': {
@@ -33,7 +36,7 @@ class ChaliceApp(cdk.Stack):
                 'iam_role_arn':role.role_arn,
                 'manage_iam_role':False,
                 'xray':True
-            },
+            },merge_template='extras.yml'
 
         )
         self.dynamodb_table.grant_read_write_data(
@@ -63,7 +66,6 @@ class ChaliceApp(cdk.Stack):
                 )
             ])
         )
-
 
     def filters(self):
         filters = {"Filters":[
@@ -140,7 +142,11 @@ class ChaliceApp(cdk.Stack):
         }}
         }
         }}
-        
+    def make_template(self):
+        import yaml
+        print(self.filters())
+        with open('extras.yml','w') as outfile:
+            return yaml.dump(self.filters(),outfile,allow_unicode=True)
                 
                
 
