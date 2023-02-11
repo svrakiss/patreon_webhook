@@ -6,11 +6,15 @@ Resources:
           Properties:
             FilterCriteria:
               Filters:
-              - Pattern: '{"dynamodb": {"NewImage": {"Status": {"S": ["active_patron"]}},
-                  "OldImage": {"Status": {"S": [{"anything-but": ["active_patron"]}]}}}}'
-              - Pattern: '{"dynamodb": {"NewImage": {"Status": {"S": ["active_patron"]}},
-                  "OldImage": {"Status": {"S": [null]}}}}'
-              - Pattern: '{"dynamodb": {"NewImage": {"Status": {"S": ["active_patron"]}},
-                  "OldImage": {"Status": {"S": [{"exists": false}]}}}}'
-              - Pattern: '{"dynamodb": {"OldImage": {"Status": {"S": ["active_patron"]}},
-                  "NewImage": {"Status": {"S": [{"anything-but": ["active_patron"]}]}}}}'
+              - Pattern: '{"dynamodb": {"Keys": {"SortKey": {"S": ["INFO"]}}, "NewImage":
+                  {"Status": {"S": ["active_patron"]}}, "OldImage": {"Status": {"S":
+                  [{"anything-but": ["active_patron"]}]}}}}'
+              - Pattern: '{"dynamodb": {"Keys": {"SortKey": {"S": ["INFO"]}}, "NewImage":
+                  {"Status": {"S": ["active_patron"]}}, "OldImage": {"Status": {"S":
+                  [null]}}}}'
+              - Pattern: '{"dynamodb": {"Keys": {"SortKey": {"S": ["INFO"]}}, "NewImage":
+                  {"Status": {"S": ["active_patron"]}}, "OldImage": {"Status": {"S":
+                  [{"exists": false}]}}}}'
+              - Pattern: '{"dynamodb": {"Keys": {"SortKey": {"S": ["INFO"]}}, "OldImage":
+                  {"Status": {"S": ["active_patron"]}}, "NewImage": {"Status": {"S":
+                  [{"anything-but": ["active_patron"]}]}}}}'
