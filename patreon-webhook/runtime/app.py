@@ -39,7 +39,15 @@ def add_character():
         item_val['CreationDate'] =item.creation_date.astimezone(timezone.utc).isoformat(timespec='milliseconds').replace("+00:00", "Z")
     # the problem with boto is it doesn't let you upsert Map Attributes
     if(request.get('meta') is not None):
-        item_val['CharacterMeta'] = { 'Artist':request.get('meta').get('artist',None),'Source':request.get('meta').get('source',None),'Comments':request.get('meta').get('comments',None)}
+        item_val['CharacterMeta'] = {}
+        if request.get('meta').get('artist') !=None:
+            item_val['CharacterMeta']['Artist']=request.get('meta').get('artist')
+        if request.get('meta').get('source') !=None:
+            item_val['CharacterMeta']['Source']=request.get('meta').get('source')
+        if request.get('meta').get('comments') !=None:
+            item_val['CharacterMeta']['Comments']=request.get('meta').get('comments')
+        if request.get('meta').get('image')!=None:
+            item_val['CharacterMeta']['Image']=request.get('meta').get('image')
         item.meta = request.get('meta')
     if(request.get('image') is not None):
         item_val['Image']= request.get('image')
