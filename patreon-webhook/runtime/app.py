@@ -11,8 +11,10 @@ from aws_xray_sdk.core import xray_recorder
 from aws_xray_sdk.core import patch_all
 from chalicelib.table import Patron
 from chalicelib.custom import AWSISODateTimeAttribute
+import logging
 patch_all()
-
+logging.basicConfig()
+_log = logging.getLogger()
 app = Chalice(app_name='patreon-connection')
 dynamodb = boto3.resource('dynamodb')
 dynamodb_table = dynamodb.Table(os.environ.get('APP_TABLE_NAME', ''))
@@ -49,6 +51,14 @@ def add_character():
         if request.get('meta').get('image')!=None:
             item_val['CharacterMeta']['Image']=request.get('meta').get('image')
         item.meta = request.get('meta')
+        try:
+            item.my_format= item.poll_format()
+            item_val['PollFormat'] = item.my_format
+            _log.info(item.my_format)
+        except:
+            import traceback
+            _log.error(traceback.format_exc())
+
     if(request.get('image') is not None):
         item_val['Image']= request.get('image')
         item.image = request.get('image')
@@ -121,3 +131,8 @@ def parseJSONAPI(member:JSONAPIResource):
     patron['PatronId']=member.id()
     patron['SortKey']="INFO"
     return patron;
+# from chalice.test import Client
+# with Client(app) as client:
+#     with open('chalicelib/example.json','rb') as f:
+#         response = client.http.put('/character',body=f.read(),headers={'Content-Type':'application/json'})
+#         assert response.status_code == 200

@@ -7,7 +7,7 @@
       "lambda_functions": {
         "api_handler": {
           "environment_variables": {
-            "APP_TABLE_NAME": ""
+            "APP_TABLE_NAME": "Patron"
 	  }
 	}
       }

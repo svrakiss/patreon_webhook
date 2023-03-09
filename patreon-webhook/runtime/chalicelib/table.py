@@ -2,7 +2,7 @@ from pynamodb.models import Model
 from pynamodb.attributes import UnicodeAttribute,MapAttribute, ListAttribute, UTCDateTimeAttribute
 import os
 from chalicelib.custom import AWSISODateTimeAttribute
-from chalicelib.index import CategoryIndex,UserIdIndex,DiscordIdIndex
+from chalicelib.index import CategoryIndex,UserIdIndex,DiscordIdIndex,PollIndex
 class CharacterMeta(MapAttribute):
     source = UnicodeAttribute(null = True,attr_name="Source")
     artist = UnicodeAttribute(null = True,attr_name="Artist")
@@ -28,3 +28,16 @@ class Patron(Model):
     cat_index = CategoryIndex()
     user_index= UserIdIndex()
     discord_index=DiscordIdIndex()
+    my_format = UnicodeAttribute(null=True,attr_name="PollFormat")
+    poll_index=PollIndex()
+    def poll_format(self):
+        artist_is_provided =self.meta.artist is not None
+        source_is_provided = self.meta.source is not None
+        if  artist_is_provided and source_is_provided:
+            return f"{self.character_name} ({self.meta.artist} | {self.meta.source})"
+        elif artist_is_provided:
+            return f"{self.character_name} ({self.meta.artist})"
+        elif source_is_provided:
+            return f"{self.character_name} ({self.meta.source })"
+        else:
+           return self.character_name

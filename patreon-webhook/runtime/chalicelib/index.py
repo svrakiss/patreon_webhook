@@ -29,3 +29,12 @@ class DiscordIdIndex(GlobalSecondaryIndex):
         write_capacity_units = 1
     discord_id = UnicodeAttribute(hash_key=True,attr_name="DiscordId")
     sort_key = UnicodeAttribute(attr_name="SortKey")
+
+class PollIndex(GlobalSecondaryIndex):
+    class Meta:
+        projection = IncludeProjection(non_attr_keys=["CharacterName",
+        "CreationDate","Category","PatStats","SortKey","CharacterMeta"])
+        read_capacity_units = 1
+        write_capacity_units = 1
+        index_name = 'poll_index'
+    my_format = UnicodeAttribute(hash_key=True,attr_name="PollFormat")

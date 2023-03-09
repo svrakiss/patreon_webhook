@@ -27,7 +27,8 @@ class ChaliceApp(cdk.Stack):
                     'APP_TABLE_NAME': self.dynamodb_table.table_name
                 },
                 'iam_role_arn':role.role_arn,
-                'manage_iam_role':False
+                'manage_iam_role':False,
+                'automatic_layer':True
             },
 
         )
