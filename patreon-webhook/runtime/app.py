@@ -41,6 +41,9 @@ def webhook_callback():
     member_response = parseJSONAPI(member.data())
     updateExp= 'SET Tier= :tier_val'
     attVals = { ':tier_val':member_response.get('Tier',[])}
+    if member_response.get('CreationDate') is not None:
+        updateExp+=', CreationDate= :create_val'
+        attVals[':create_val']=member_response.get("CreationDate")
     if(member_response.get('DiscordId') is not None):
         updateExp= updateExp + ', DiscordId= :discord_val'
         attVals[':discord_val'] = member_response.get('DiscordId')
@@ -127,4 +130,5 @@ def parseJSONAPI(member:JSONAPIResource):
     patron['PartKey'] = "PATREON_" + member.id()
     patron['PatronId']=member.id()
     patron['SortKey']="INFO"
+    patron['CreationDate']=datetime.utcnow().isoformat(timespec='milliseconds').replace("+00:00", "Z")
     return patron;
