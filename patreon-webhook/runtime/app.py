@@ -14,13 +14,14 @@ app = Chalice(app_name='patreon-webhook')
 dynamodb = boto3.resource('dynamodb')
 dynamodb_table = dynamodb.Table(os.environ.get('APP_TABLE_NAME', ''))
 ssmclient = boto3.client('ssm')
-xray_recorder.begin_segment('init')
-secret = ssmclient.get_parameter(Name='/config/patreon-webhook/secret',WithDecryption=True)
-secret:str  = secret['Parameter']['Value']
-xray_recorder.end_segment()
+# xray_recorder.begin_segment('init')
+# xray_recorder.end_segment()
 @app.route('/callback', methods=['POST','GET','PUT'])
 
 def webhook_callback():
+    secret = ssmclient.get_parameter(Name='/config/patreon-webhook/secret',WithDecryption=True)
+    secret:str  = secret['Parameter']['Value']
+
     request = app.current_request.json_body
     raw_body = app.current_request.raw_body
     try:
