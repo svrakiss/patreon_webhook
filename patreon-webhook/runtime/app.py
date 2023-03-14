@@ -9,19 +9,20 @@ from boto3.dynamodb.conditions import Key, Attr
 from aws_xray_sdk.core import xray_recorder
 
 from aws_xray_sdk.core import patch_all
+import json
 patch_all()
 app = Chalice(app_name='patreon-webhook')
 dynamodb = boto3.resource('dynamodb')
 dynamodb_table = dynamodb.Table(os.environ.get('APP_TABLE_NAME', ''))
 ssmclient = boto3.client('ssm')
-# xray_recorder.begin_segment('init')
-# xray_recorder.end_segment()
-@app.route('/callback', methods=['POST','GET','PUT'])
+secret_key_map :dict[str,str] = json.loads(os.environ.get("WEBHOOK_SECRET",json.dumps({"":"/config/patreon-webhook/secret"})))
 
-def webhook_callback():
-    secret = ssmclient.get_parameter(Name='/config/patreon-webhook/secret',WithDecryption=True)
+def webhook_callback(**kwargs):
+    query_params = kwargs or {}
+    secret_key=query_params.pop("secret_key","")
+    secret = ssmclient.get_parameter(Name=secret_key_map.get(secret_key),WithDecryption=True)
     secret:str  = secret['Parameter']['Value']
-
+ 
     request = app.current_request.json_body
     raw_body = app.current_request.raw_body
     try:
@@ -67,7 +68,17 @@ def webhook_callback():
         ReturnValues="ALL_NEW"
     )
 
-@app.route('/character',methods = ['POST','PUT'])
+@app.route('/callback', methods=['POST','GET','PUT'])
+def web():
+    return webhook_callback(secret_key="")
+
+@app.route('/callback_1',methods=['POST','PUT'])
+def web2():
+    return webhook_callback(secret_key="1")
+
+
+@app.route('/character',methods = 
+           ['POST','PUT'])
 def add_character():
     request = app.current_request.json_body
     response =find_by_discordId(request)['Items']
