@@ -1,4 +1,8 @@
+import enum
+from functools import reduce
 import os
+import traceback
+from typing import Callable, TypeVar
 import boto3
 from chalice import Chalice, Response
 from patreon.jsonapi.parser import JSONAPIParser, JSONAPIResource
@@ -62,9 +66,9 @@ def add_character():
     if(request.get('image') is not None):
         item_val['Image']= request.get('image')
         item.image = request.get('image')
-    if response[0].status == "OVERRIDE" or response[0].status == 'active_patron':
+    if response[0].status in ["OVERRIDE", "active_patron"]:
         item.pat_stats= "YEP"
-        item_val['PatStats']="YEP"
+        item_val['PatStats']=get_stat(response[0])
     return dynamodb_table.put_item(
         Item =item_val,
         ReturnValues="ALL_OLD"
@@ -136,3 +140,46 @@ def parseJSONAPI(member:JSONAPIResource):
 #     with open('chalicelib/example.json','rb') as f:
 #         response = client.http.put('/character',body=f.read(),headers={'Content-Type':'application/json'})
 #         assert response.status_code == 200
+
+class tier_enum(enum.Enum):
+    TIER_1 = (1, 'Supreme Kimochi Counsellor','SKC')
+    TIER_2 = (2,'Envoy of Lewdness','EoL')
+    TIER_3 = (3, 'Minister of Joy','MoJ')
+    def __init__(self,order:int,name:str,code:str) -> None:
+        self._order=order
+        self._name=name
+        self.code =code
+    @property
+    def order(self):
+        return self._order
+    @property
+    def name(self):
+        return self._name
+    def __lt__(self,other):
+        return self._order < other._order
+    @classmethod
+    def get(cls,name,default=None):
+        try:
+            return cls[name]
+        except KeyError:
+            return default
+_T = TypeVar('_T')
+_T1 = TypeVar('_T1')
+
+def get_stat(resp:Patron):
+    def sub_fun(respy:list[str])->str:
+        if respy is None or len(respy) == 0:
+            return "YEP"
+        def map_me(func:Callable[[_T],_T1])->Callable[[list[_T]],list[_T1]]:
+             return lambda x: map(func,x)
+        operations :list[Callable]= [
+             map_me(lambda x: tier_enum.get(x,tier_enum.TIER_1)),
+             min,
+             lambda x: x.code
+        ]
+        return  reduce(lambda x, f: f(x), operations,respy)
+    try:    
+        return sub_fun(resp.tier)
+    except:
+        _log.error(traceback.format_exc())
+        return "YEP"
