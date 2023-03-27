@@ -31,6 +31,41 @@ def find_all(event: DynamoDBEvent):
         result = decide(r)
         if result == "approve": # calculate PatStats
             app.log.debug(f"Approve {r.new_image}")
+            app.log.debug(f'Approve old: {r.old_image}')
+            to_change_actually =Patron.query(r.keys.get('PartKey').get('S'),Patron.sort_key.startswith("CHANNEL"))
+            stat=get_stat(r)
+            for i in to_change_actually:
+                i.update(
+                    [
+                        Patron.pat_stats.set(stat)
+                    ]
+                )
+                app.log.debug( i.attribute_values)
+
+        elif result == "disapprove":
+            app.log.debug(f"Disapprove {r.new_image}")
+
+            to_change_actually =Patron.query(r.keys.get('PartKey').get('S'),Patron.sort_key.startswith("CHANNEL"))
+            for i in to_change_actually:
+                i.update(
+                    [
+                        Patron.pat_stats.remove()
+                    ]
+                )
+            # remove PatStats
+        elif result == "nothing":
+            app.log.debug("shouldn't be here")
+            app.log.debug(f"Image {r.new_image}")
+@app.on_dynamodb_record(os.environ.get('APP_STREAM_ARN'),name='tierChange')
+def change_tier(event: DynamoDBEvent):
+    for r in event:
+        if r.event_name != "MODIFY" or r.keys.get('SortKey') != {"S":"INFO"}: # put this in the filter criteria
+            app.log.debug("Shouldn't be here")
+            app.log.debug(f"Image {r.new_image}")
+            continue
+        result = decide(r)
+        if result == "approve": # calculate PatStats
+            app.log.debug(f"Approve {r.new_image}")
             to_change_actually =Patron.query(r.keys.get('PartKey').get('S'),Patron.sort_key.startswith("CHANNEL"))
             stat=get_stat(r)
             for i in to_change_actually:
@@ -91,24 +126,18 @@ class tier_enum(enum.Enum):
             return cls[name]
         except KeyError:
             return default
-_T = TypeVar('_T')
-_T1 = TypeVar('_T1')
 
 def get_stat(resp:DynamoDBRecord):
-    def sub_fun(respy:dict[str,list[dict[str,str]]])->str:
-        if respy is None or respy == {'L':[]}:
+    def sub_fun(respy:str)->str:
+        if respy is None:
             return "YEP"
-        def map_me(func:Callable[[_T],_T1])->Callable[[list[_T]],list[_T1]]:
-             return lambda x: map(func,x)
         operations :list[Callable]= [
-             map_me(lambda x: x.get('S')),
-             map_me(lambda x: tier_enum.get(x,tier_enum.TIER_1)),
-             min,
+             lambda x: tier_enum.get(x,tier_enum.TIER_1),
              lambda x: x.code
         ]
-        return  reduce(lambda x, f: f(x), operations,respy.get('L'))
+        return  reduce(lambda x, f: f(x), operations,respy)
     try:    
-        return sub_fun(resp.new_image.get('Tier'))
+        return sub_fun(resp.new_image.get('HTier'))
     except:
         app.log.error(traceback.format_exc())
         return "YEP"

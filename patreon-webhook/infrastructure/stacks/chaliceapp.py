@@ -37,7 +37,7 @@ class ChaliceApp(cdk.Stack):
                 'iam_role_arn': role.role_arn,
                 'manage_iam_role': False,
                 'xray': True,
-                'automatic_layer':True
+                'automatic_layer': True
             }, merge_template='extras.yml'
 
         )
@@ -71,7 +71,7 @@ class ChaliceApp(cdk.Stack):
         )
 
     def filters(self):
-        filters = {"Filters": [
+        state_filters = {"Filters": [
             # pattern for approval state change
             {
                 "Pattern": json.dumps(
@@ -142,16 +142,64 @@ class ChaliceApp(cdk.Stack):
             }
         ]
         }
+        def check_for_specific_tier(inputs:str):
+            return  {
+                "eventName": ["MODIFY"],
+                "dynamodb": {
+                    "Keys": {
+                    "SortKey": {
+                        "S": ["INFO"]
+                    }
+                    },
+                    "OldImage": {
+                    "HTier": {
+                        "S": [{
+                        "anything-but": [inputs]
+                        }]
+                    }
+                    },
+                    "NewImage": {
+                    "HTier": {
+                        "S": [inputs]
+                    }
+                    }
+                }
+                }
+        tier_filters = {
+            "Filters": [
+                {
+                    "Pattern": json.dumps(
+                        {"eventName": ["MODIFY"],
+                         "dynamodb":{
+                            "Keys": {
+                                "SortKey": {"S": ["INFO"]}
+                            },
+                            "OldImage":{"HTier":{"S":[{"exists":False}]}},
+                            "NewImage":{"HTier":{"S":[{"exists":True}]}}
+                        }}
+                    )
+                },
+                *({"Pattern":json.dumps(check_for_specific_tier(tier)) } for tier in ["Supreme Kimochi Counsellor","Minister of Joy","Envoy of Lewdness"])
+            ]
+        }
         return {"Resources":
                 {"StateChange":
                  {"Properties":
                   {"Events":
                    {"StateChangeDynamodbEventSource":
                     {"Properties":
-                     {"FilterCriteria": filters}
+                     {"FilterCriteria": state_filters}
                      }}
-                   }}
-                 }}
+                   }}, "TierChange":
+                    {"Properties": {
+                        "Events":
+                        {"TierChangeDynamodbEventSource":
+                         {"Properties": {
+                             "FilterCriteria": tier_filters
+                         }}}
+                    }}}
+
+                }
 
     def make_template(self):
         import yaml

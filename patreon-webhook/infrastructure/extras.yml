@@ -18,3 +18,25 @@ Resources:
               - Pattern: '{"dynamodb": {"Keys": {"SortKey": {"S": ["INFO"]}}, "OldImage":
                   {"Status": {"S": ["active_patron"]}}, "NewImage": {"Status": {"S":
                   [{"anything-but": ["active_patron"]}]}}}}'
+  TierChange:
+    Properties:
+      Events:
+        TierChangeDynamodbEventSource:
+          Properties:
+            FilterCriteria:
+              Filters:
+              - Pattern: '{"eventName": ["MODIFY"], "dynamodb": {"Keys": {"SortKey":
+                  {"S": ["INFO"]}}, "OldImage": {"HTier": {"S": [{"exists": false}]}},
+                  "NewImage": {"HTier": {"S": [{"exists": true}]}}}}'
+              - Pattern: '{"eventName": ["MODIFY"], "dynamodb": {"Keys": {"SortKey":
+                  {"S": ["INFO"]}}, "OldImage": {"HTier": {"S": [{"anything-but":
+                  ["Supreme Kimochi Counsellor"]}]}}, "NewImage": {"HTier": {"S":
+                  ["Supreme Kimochi Counsellor"]}}}}'
+              - Pattern: '{"eventName": ["MODIFY"], "dynamodb": {"Keys": {"SortKey":
+                  {"S": ["INFO"]}}, "OldImage": {"HTier": {"S": [{"anything-but":
+                  ["Minister of Joy"]}]}}, "NewImage": {"HTier": {"S": ["Minister
+                  of Joy"]}}}}'
+              - Pattern: '{"eventName": ["MODIFY"], "dynamodb": {"Keys": {"SortKey":
+                  {"S": ["INFO"]}}, "OldImage": {"HTier": {"S": [{"anything-but":
+                  ["Envoy of Lewdness"]}]}}, "NewImage": {"HTier": {"S": ["Envoy of
+                  Lewdness"]}}}}'
