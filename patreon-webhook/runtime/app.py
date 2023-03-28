@@ -59,10 +59,6 @@ def find_all(event: DynamoDBEvent):
 @app.on_dynamodb_record(os.environ.get('APP_STREAM_ARN'),name='tierChange')
 def change_tier(event: DynamoDBEvent):
     for r in event:
-        if r.event_name != "MODIFY" or r.keys.get('SortKey') != {"S":"INFO"}: # put this in the filter criteria
-            app.log.debug("Shouldn't be here")
-            app.log.debug(f"Image {r.new_image}")
-            continue
         result = decide(r)
         if result == "approve": # calculate PatStats
             app.log.debug(f"Approve {r.new_image}")
@@ -75,35 +71,21 @@ def change_tier(event: DynamoDBEvent):
                     ]
                 )
                 app.log.debug( i.attribute_values)
-
-        elif result == "disapprove":
-            app.log.debug(f"Disapprove {r.new_image}")
-
-            to_change_actually =Patron.query(r.keys.get('PartKey').get('S'),Patron.sort_key.startswith("CHANNEL"))
-            for i in to_change_actually:
-                i.update(
-                    [
-                        Patron.pat_stats.remove()
-                    ]
-                )
-            # remove PatStats
         elif result == "nothing":
             app.log.debug("shouldn't be here")
             app.log.debug(f"Image {r.new_image}")
+            app.log.debug(f"event {r._event_dict}")
+
 
 
 def decide(resp:DynamoDBRecord):
-    if resp.old_image.get('Status') == None:
-        if resp.new_image.get('Status') == {'S':'active_patron'}:
+    if resp.old_image.get('HTier') == None:
+        if resp.new_image.get('HTier') != None:
             return "approve"
         return "nothing"
-    if resp.old_image.get('Status')== {'S':'active_patron'}:
-        if resp.new_image.get('Status')!= {'S': 'active_patron'}:
-            return "disapprove"
-        return "nothing"
-    if resp.new_image.get('Status') == {'S':'active_patron'}:
+    elif resp.old_image.get('HTier')!= resp.new_image.get('HTier'):
         return "approve"
-    return "nothing"
+    return "nothing" 
 class tier_enum(enum.Enum):
     TIER_1 = (1, 'Supreme Kimochi Counsellor','SKC')
     TIER_2 = (2,'Envoy of Lewdness','EoL')
@@ -128,10 +110,11 @@ class tier_enum(enum.Enum):
             return default
 
 def get_stat(resp:DynamoDBRecord):
-    def sub_fun(respy:str)->str:
+    def sub_fun(respy:dict[str,str])->str:
         if respy is None:
             return "YEP"
         operations :list[Callable]= [
+            lambda x: x.get("S"),
              lambda x: tier_enum.get(x,tier_enum.TIER_1),
              lambda x: x.code
         ]
