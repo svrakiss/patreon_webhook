@@ -1,4 +1,5 @@
 import os
+from typing import Optional
 import boto3
 from chalice import Chalice, Response
 from patreon.jsonapi.parser import JSONAPIParser, JSONAPIResource
@@ -41,20 +42,21 @@ def webhook_callback(**kwargs):
     print(str(request))
     member = JSONAPIParser(request)
     member_response = parseJSONAPI(member.data())
-    updateExp= 'SET Tier= :tier_val'
-    attVals = { ':tier_val':member_response.get('Tier',[])}
-    if member_response.get('CreationDate') is not None:
-        updateExp+=', CreationDate= :create_val'
-        attVals[':create_val']=member_response.get("CreationDate")
+    updateExp= 'SET CreationDate= :create_val'
+    attVals={':create_val':member_response.get("CreationDate")}
+    if member_response.get('HTier') is not None:
+        updateExp+=', Tier= :tier_val, HTier= :hval'
+        attVals.update({ ':tier_val':member_response.get('Tier'), ':hval':member_response.get('HTier')})
+
     if(member_response.get('DiscordId') is not None):
-        updateExp= updateExp + ', DiscordId= :discord_val'
+        updateExp+=', DiscordId= :discord_val'
         attVals[':discord_val'] = member_response.get('DiscordId')
     if(member_response.get('UserId') !=None):
-        updateExp = updateExp + ', UserId= :user_val'
+        updateExp +=', UserId= :user_val'
         attVals[':user_val'] = member_response.get('UserId')
     if member_response.get('Status') !=None:
         attVals[':status_val']=member_response.get('Status')
-        updateExp = updateExp + ', #StatusAtt = :status_val' 
+        updateExp +=  ', #StatusAtt = :status_val' 
         return dynamodb_table.update_item(Key = {"PartKey":member_response.get('PartKey'),"SortKey":member_response.get('SortKey')},
         UpdateExpression=updateExp,
         ExpressionAttributeNames={"#StatusAtt":"Status"},
@@ -131,6 +133,10 @@ def parseJSONAPI(member:JSONAPIResource):
             if(len(member.relationship("currently_entitled_tiers"))>0):
                 if(member.relationship("currently_entitled_tiers")[0].attribute('title') is not None):
                     patron['Tier'] = [ x.attribute('title') for x in member.relationship("currently_entitled_tiers")]
+                    if patron['Tier'] and len(patron['Tier'])>0:
+                        patron['HTier']= helper(patron['Tier'])
+                    else:
+                        del patron['Tier']
                     # print(member.relationship("currently_entitled_tiers")[0].attribute('title'))
     if(member.relationship('user') is not None):
         if(member.relationship('user').attribute('social_connections') is not None):
@@ -144,3 +150,9 @@ def parseJSONAPI(member:JSONAPIResource):
     patron['SortKey']="INFO"
     patron['CreationDate']=datetime.utcnow().isoformat(timespec='milliseconds').replace("+00:00", "Z")
     return patron;
+def helper(my_tiers:Optional[list[str]]):
+    if my_tiers and len(my_tiers)>0:
+        tiers=['Supreme Kimochi Counsellor','Envoy of Lewdness','Minister of Joy']
+        my_index = {val:i for i,val in enumerate(tiers)}
+        return min( my_tiers,key=lambda x:my_index.get(x,10))
+    return None
