@@ -37,7 +37,8 @@ class ChaliceApp(cdk.Stack):
                 'iam_role_arn': role.role_arn,
                 'manage_iam_role': False,
                 'xray': True,
-                'automatic_layer': True
+                'automatic_layer': True,
+                "lambda_timeout":300
             }, merge_template='extras.yml'
 
         )
