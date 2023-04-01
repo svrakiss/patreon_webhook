@@ -23,10 +23,12 @@ dynamodb_table = dynamodb.Table(os.environ.get('APP_TABLE_NAME', ''))
 app.debug = True
 @app.on_dynamodb_record(os.environ.get('APP_STREAM_ARN'),name='stateChange')
 def find_all(event: DynamoDBEvent):
+    """This should be disabled, if it is actually possible to retain an entitlement as a non-patron"""
     for r in event:
         if r.event_name != "MODIFY" or r.keys.get('SortKey') != {"S":"INFO"}: # put this in the filter criteria
             app.log.debug("Shouldn't be here")
             app.log.debug(f"Image {r.new_image}")
+            app.log.debug(f"Event {r._event_dict}")
             continue
         result = decide(r)
         if result == "approve": # calculate PatStats
@@ -56,13 +58,15 @@ def find_all(event: DynamoDBEvent):
         elif result == "nothing":
             app.log.debug("shouldn't be here")
             app.log.debug(f"Image {r.new_image}")
+            app.log.debug(f"Event {r._event_dict}")
+
 @app.on_dynamodb_record(os.environ.get('APP_STREAM_ARN'),name='tierChange')
 def change_tier(event: DynamoDBEvent):
     for r in event:
         result = decide(r)
         if result == "approve": # calculate PatStats
             app.log.debug(f"Approve {r.new_image}")
-            to_change_actually =Patron.query(r.keys.get('PartKey').get('S'),Patron.sort_key.startswith("CHANNEL"))
+            to_change_actually =get_my_submissions(r)
             stat=get_stat(r)
             for i in to_change_actually:
                 i.update(
@@ -71,12 +75,21 @@ def change_tier(event: DynamoDBEvent):
                     ]
                 )
                 app.log.debug( i.attribute_values)
+        elif result == "disapprove":
+            """Remove the pat_stats from the submissions"""
+            to_change_actually = get_my_submissions(r)
+            for i in to_change_actually:
+                i.update( actions=[Patron.pat_stats.remove()])
+                app.log.debug( i.attribute_values)
+
         elif result == "nothing":
             app.log.debug("shouldn't be here")
             app.log.debug(f"Image {r.new_image}")
             app.log.debug(f"event {r._event_dict}")
 
-
+def get_my_submissions(record:DynamoDBRecord):
+    """Get submissions for the patron"""
+    return Patron.query(record.keys.get('PartKey').get('S'),Patron.sort_key.startswith("CHANNEL"))
 
 def decide(resp:DynamoDBRecord):
     if resp.old_image.get('HTier') == None:
@@ -85,6 +98,8 @@ def decide(resp:DynamoDBRecord):
         return "nothing"
     elif resp.old_image.get('HTier')!= resp.new_image.get('HTier'):
         return "approve"
+    elif resp.new_image.get("HTier") == None:
+        return "disapprove"
     return "nothing" 
 class tier_enum(enum.Enum):
     TIER_1 = (1, 'Supreme Kimochi Counsellor','SKC')

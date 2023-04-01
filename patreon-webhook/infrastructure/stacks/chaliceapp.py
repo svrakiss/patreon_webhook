@@ -168,7 +168,7 @@ class ChaliceApp(cdk.Stack):
                 }
         tier_filters = {
             "Filters": [
-                {
+                {# Approval
                     "Pattern": json.dumps(
                         {"eventName": ["MODIFY"],
                          "dynamodb":{
@@ -180,6 +180,18 @@ class ChaliceApp(cdk.Stack):
                         }}
                     )
                 },
+                {# Disapproval 
+                    "Pattern": json.dumps(
+                        {"eventName": ["MODIFY"],
+                         "dynamodb":{
+                            "Keys": {
+                                "SortKey": {"S": ["INFO"]}
+                            },
+                            "NewImage":{"HTier":{"S":[{"exists":False}]}},
+                            "OldImage":{"HTier":{"S":[{"exists":True}]}}
+                        }}
+                    )
+                }, # can only have three tiers now. (or until we filter limit increase)
                 *({"Pattern":json.dumps(check_for_specific_tier(tier)) } for tier in ["Supreme Kimochi Counsellor","Minister of Joy","Envoy of Lewdness"])
             ]
         }
