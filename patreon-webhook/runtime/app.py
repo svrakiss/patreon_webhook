@@ -66,7 +66,7 @@ def add_character():
     if(request.get('image') is not None):
         item_val['Image']= request.get('image')
         item.image = request.get('image')
-    if response[0].status in ["OVERRIDE", "active_patron"]:
+    if response[0].status in ["OVERRIDE", "active_patron"] or (response[0].tier is not None and  len(response[0])>0 ):
         item.pat_stats= "YEP"
         item_val['PatStats']=get_stat(response[0])
     return dynamodb_table.put_item(
