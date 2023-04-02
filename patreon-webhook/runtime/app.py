@@ -13,7 +13,7 @@ from boto3.dynamodb.conditions import Key, Attr
 from aws_xray_sdk.core import xray_recorder
 from aws_xray_sdk.core import patch_all
 from chalice.app import DynamoDBEvent,DynamoDBRecord
-
+from pat_tools.utils import tier_enum
 patch_all()
 
 
@@ -101,28 +101,6 @@ def decide(resp:DynamoDBRecord):
     elif resp.new_image.get("HTier") == None:
         return "disapprove"
     return "nothing" 
-class tier_enum(enum.Enum):
-    TIER_1 = (1, 'Supreme Kimochi Counsellor','SKC')
-    TIER_2 = (2,'Envoy of Lewdness','EoL')
-    TIER_3 = (3, 'Minister of Joy','MoJ')
-    def __init__(self,order:int,name:str,code:str) -> None:
-        self._order=order
-        self._name=name
-        self.code =code
-    @property
-    def order(self):
-        return self._order
-    @property
-    def name(self):
-        return self._name
-    def __lt__(self,other):
-        return self._order < other._order
-    @classmethod
-    def get(cls,name,default=None):
-        try:
-            return cls[name]
-        except KeyError:
-            return default
 
 def get_stat(resp:DynamoDBRecord):
     def sub_fun(respy:dict[str,str])->str:
