@@ -15,6 +15,7 @@ from aws_xray_sdk.core import xray_recorder
 from aws_xray_sdk.core import patch_all
 from chalicelib.table import Patron
 from chalicelib.custom import AWSISODateTimeAttribute
+from pat_tools.utils import tier_enum
 import logging
 patch_all()
 logging.basicConfig()
@@ -141,28 +142,6 @@ def parseJSONAPI(member:JSONAPIResource):
 #         response = client.http.put('/character',body=f.read(),headers={'Content-Type':'application/json'})
 #         assert response.status_code == 200
 
-class tier_enum(enum.Enum):
-    TIER_1 = (1, 'Supreme Kimochi Counsellor','SKC')
-    TIER_2 = (2,'Envoy of Lewdness','EoL')
-    TIER_3 = (3, 'Minister of Joy','MoJ')
-    def __init__(self,order:int,name:str,code:str) -> None:
-        self._order=order
-        self._name=name
-        self.code =code
-    @property
-    def order(self):
-        return self._order
-    @property
-    def name(self):
-        return self._name
-    def __lt__(self,other):
-        return self._order < other._order
-    @classmethod
-    def get(cls,name,default=None):
-        try:
-            return cls[name]
-        except KeyError:
-            return default
 _T = TypeVar('_T')
 _T1 = TypeVar('_T1')
 
