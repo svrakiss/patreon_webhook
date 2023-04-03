@@ -12,7 +12,7 @@ class CategoryIndex(GlobalSecondaryIndex):
 class UserIdIndex(GlobalSecondaryIndex):
     class Meta:
         index_name = 'UserId-index'
-        projection = IncludeProjection(['PartKey','SortKey','Tier','Status'])
+        projection = IncludeProjection(['PartKey','SortKey','Tier','Status','HTier'])
         read_capacity_units = 2
         write_capacity_units = 1
     user_id= UnicodeAttribute(hash_key=True,attr_name="UserId")
@@ -20,7 +20,7 @@ class UserIdIndex(GlobalSecondaryIndex):
     part_key = UnicodeAttribute(attr_name="PartKey")
     sort_key = UnicodeAttribute(attr_name="SortKey")
     status = UnicodeAttribute(null=True,attr_name="Status")
-
+    htier=UnicodeAttribute(null=True,attr_name="HTier")
 class DiscordIdIndex(GlobalSecondaryIndex):
     class Meta:
         index_name= 'discordIdIndex'
@@ -29,7 +29,7 @@ class DiscordIdIndex(GlobalSecondaryIndex):
         write_capacity_units = 1
     discord_id = UnicodeAttribute(hash_key=True,attr_name="DiscordId")
     sort_key = UnicodeAttribute(attr_name="SortKey")
-
+    
 class PollIndex(GlobalSecondaryIndex):
     class Meta:
         projection = IncludeProjection(non_attr_keys=["CharacterName",

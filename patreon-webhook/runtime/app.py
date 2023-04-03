@@ -67,9 +67,10 @@ def add_character():
     if(request.get('image') is not None):
         item_val['Image']= request.get('image')
         item.image = request.get('image')
-    if response[0].status in ["OVERRIDE", "active_patron"] or (response[0].tier is not None and  len(response[0])>0 ):
-        item.pat_stats= "YEP"
-        item_val['PatStats']=get_stat(response[0])
+    stat = get_stat(response[0])
+    if stat is not None:
+        item.pat_stats= stat
+        item_val['PatStats']=stat
     return dynamodb_table.put_item(
         Item =item_val,
         ReturnValues="ALL_OLD"
@@ -145,20 +146,8 @@ def parseJSONAPI(member:JSONAPIResource):
 _T = TypeVar('_T')
 _T1 = TypeVar('_T1')
 
-def get_stat(resp:Patron):
-    def sub_fun(respy:list[str])->str:
-        if respy is None or len(respy) == 0:
-            return "YEP"
-        def map_me(func:Callable[[_T],_T1])->Callable[[list[_T]],list[_T1]]:
-             return lambda x: map(func,x)
-        operations :list[Callable]= [
-             map_me(lambda x: tier_enum.get(x,tier_enum.TIER_1)),
-             min,
-             lambda x: x.code
-        ]
-        return  reduce(lambda x, f: f(x), operations,respy)
-    try:    
-        return sub_fun(resp.tier)
-    except:
-        _log.error(traceback.format_exc())
+def get_stat(pat:Patron):
+    if pat.htier is not None:
+        return tier_enum.get(pat.htier).code
+    if pat.status in ["Override","OVERRIDE"]:
         return "YEP"
