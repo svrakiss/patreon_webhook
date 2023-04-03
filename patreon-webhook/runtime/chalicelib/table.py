@@ -29,6 +29,7 @@ class Patron(Model):
     user_index= UserIdIndex()
     discord_index=DiscordIdIndex()
     my_format = UnicodeAttribute(null=True,attr_name="PollFormat")
+    htier= UnicodeAttribute(null=True,attr_name="HTier")
     poll_index=PollIndex()
     def poll_format(self):
         artist_is_provided =self.meta.artist is not None
