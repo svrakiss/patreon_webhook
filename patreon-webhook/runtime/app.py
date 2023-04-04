@@ -13,7 +13,7 @@ import boto3.dynamodb.types
 from boto3.dynamodb.conditions import Key, Attr
 from aws_xray_sdk.core import xray_recorder
 from aws_xray_sdk.core import patch_all
-from chalicelib.table import Patron
+from chalicelib.table import CharacterMeta, Patron
 from chalicelib.custom import AWSISODateTimeAttribute
 from pat_tools.utils import tier_enum
 import logging
@@ -55,7 +55,8 @@ def add_character():
             item_val['CharacterMeta']['Comments']=request.get('meta').get('comments')
         if request.get('meta').get('image')!=None:
             item_val['CharacterMeta']['Image']=request.get('meta').get('image')
-        item.meta = request.get('meta')
+        item.meta._set_attributes(**request.get('meta'))
+        _log.info(item.meta)
         try:
             item.my_format= item.poll_format()
             item_val['PollFormat'] = item.my_format
