@@ -109,7 +109,7 @@ def find_member():
 
 @app.route("/poll",methods=['PUT'])
 def get_poll():
-    return [ x.to_json() for x in Patron.cat_index.query(app.current_request.json_body.get('category','Cartoons'),filter_condition=Patron.pat_stats.exists())]
+    return [ x.to_json() for x in Patron.cat_index.query(app.current_request.json_body.get('category','Cartoons'),filter_condition=Patron.pat_stats.exists() and Patron.meta.contains(Patron.meta.status))]
     # return dynamodb_table.query(IndexName='Category-CreationDate-index',
     # KeyConditionExpression=Key('Category').eq(app.current_request.json_body.get('category','Cartoons')),
     # FilterExpression=Attr('PatStats').exists())['Items']

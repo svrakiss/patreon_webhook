@@ -8,6 +8,7 @@ class CharacterMeta(MapAttribute):
     artist = UnicodeAttribute(null = True,attr_name="Artist")
     comments = UnicodeAttribute(null = True,attr_name="Comments")
     image= UnicodeAttribute(null=True,attr_name="Image")
+    status = UnicodeAttribute(null=True,attr_name="Status")
 class Patron(Model):
     class Meta:
         table_name = os.environ.get("APP_TABLE_NAME")
