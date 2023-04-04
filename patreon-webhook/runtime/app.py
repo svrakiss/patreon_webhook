@@ -23,6 +23,7 @@ _log = logging.getLogger()
 app = Chalice(app_name='patreon-connection')
 dynamodb = boto3.resource('dynamodb')
 dynamodb_table = dynamodb.Table(os.environ.get('APP_TABLE_NAME', ''))
+app.debug=True
 @app.route('/character',methods = ['POST','PUT'])
 def add_character():
     request = app.current_request.json_body
