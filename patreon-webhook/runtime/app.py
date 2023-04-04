@@ -56,8 +56,10 @@ def add_character():
             item_val['CharacterMeta']['Comments']=request.get('meta').get('comments')
         if request.get('meta').get('image')!=None:
             item_val['CharacterMeta']['Image']=request.get('meta').get('image')
+        if request.get('meta').get('status') !=None:
+            item_val['CharacterMeta']['Status']=request.get('meta').get('status')
         item.meta._set_attributes(**request.get('meta'))
-        _log.info(item.meta)
+        app.log.debug(item.meta)
         try:
             item.my_format= item.poll_format()
             item_val['PollFormat'] = item.my_format
