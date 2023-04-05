@@ -63,10 +63,10 @@ def add_character():
         try:
             item.my_format= item.poll_format()
             item_val['PollFormat'] = item.my_format
-            _log.info(item.my_format)
+            app.log.info(item.my_format)
         except:
             import traceback
-            _log.error(traceback.format_exc())
+            app.log.error(traceback.format_exc())
 
     if(request.get('image') is not None):
         item_val['Image']= request.get('image')
@@ -114,7 +114,7 @@ def find_member():
 @app.route("/poll",methods=['PUT'])
 def get_poll():
     try:
-        return [ x.to_json() for x in Patron.cat_index.query(app.current_request.json_body.get('category','Cartoons'),filter_condition=Patron.pat_stats.exists() and Patron.meta.contains(Patron.meta.status))]
+        return [ x.to_json() for x in Patron.cat_index.query(app.current_request.json_body.get('category','Cartoons'),filter_condition=Patron.pat_stats.exists() & Patron.meta['status'].does_not_exist())]
     except:
         app.log.error(traceback.format_exc())
         return  [ x.to_json() for x in Patron.cat_index.query(app.current_request.json_body.get('category','Cartoons'),filter_condition=Patron.pat_stats.exists())]
